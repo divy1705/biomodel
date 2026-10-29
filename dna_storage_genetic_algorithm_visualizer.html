@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Data Storage & Genetic Algorithm Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .nucleotide-A { background-color: #ef4444; color: white; }
+        .nucleotide-C { background-color: #3b82f6; color: white; }
+        .nucleotide-G { background-color: #10b981; color: white; }
+        .nucleotide-T { background-color: #f59e0b; color: white; }
+        .error-sub { outline: 2px solid #ef4444; outline-offset: 1px; }
+        .error-ins { outline: 2px solid #a855f7; outline-offset: 1px; }
+        .error-del { opacity: 0.3; text-decoration: line-through; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-900 text-slate-100">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-cyan-500 to-indigo-500 p-2 rounded-lg text-white">
+                    <i data-lucide="dna" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
+                        Bio-Computational Lab
+                    </h1>
+                    <p class="text-xs text-slate-400">DNA Storage Engine & Genetic Algorithm Simulator</p>
+                </div>
+            </div>
+
+            <!-- Tab Buttons -->
+            <nav class="flex space-x-2 bg-slate-800/80 p-1 rounded-xl border border-slate-700/50">
+                <button id="tab-dna-btn" onclick="switchTab('dna')" class="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-500/20">
+                    <i data-lucide="database" class="w-4 h-4"></i>
+                    <span>DNA Data Storage</span>
+                </button>
+                <button id="tab-ga-btn" onclick="switchTab('ga')" class="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-200">
+                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                    <span>Genetic Algorithms</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+        <!-- TAB 1: DNA DATA STORAGE -->
+        <section id="tab-dna" class="space-y-6">
+            <!-- Top Controls Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Encoding Panel -->
+                <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-md font-semibold text-slate-200 flex items-center gap-2">
+                                <i data-lucide="file-input" class="w-5 h-5 text-cyan-400"></i>
+                                1. Encode Data to DNA
+                            </h2>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+                                Step 1
+                            </span>
+                        </div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Input Text String</label>
+                        <textarea id="dna-input-text" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none transition resize-none" placeholder="Enter text to store in DNA...">Hello World! DNA Storage 2026</textarea>
+                        
+                        <div class="mt-4 grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Encoding Scheme</label>
+                                <select id="dna-scheme" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                                    <option value="direct">Direct 2-Bit (A=00, C=01, G=10, T=11)</option>
+                                    <option value="rotating">Rotating (Avoid Homopolymers)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Max Nucleotide Capacity</label>
+                                <div class="text-xs font-mono text-cyan-400 py-2" id="nucleotide-count">0 Nucleotides</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="processDNAEncoding()" class="mt-4 w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium rounded-xl text-sm transition shadow-md shadow-cyan-500/10 flex items-center justify-center gap-2">
+                        <i data-lucide="binary" class="w-4 h-4"></i> Encode to Nucleotides
+                    </button>
+                </div>
+
+                <!-- Channel Simulation & Error Injection -->
+                <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-md font-semibold text-slate-200 flex items-center gap-2">
+                                <i data-lucide="flask-conical" class="w-5 h-5 text-amber-400"></i>
+                                2. Synthesis & Storage Noise
+                            </h2>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                                Step 2
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Simulate chemical synthesis errors, decay, PCR mutations, or sequencing misreads.</p>
+
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-300">Substitution Error Rate</span>
+                                    <span class="font-mono text-amber-400" id="sub-rate-val">2%</span>
+                                </div>
+                                <input type="range" id="sub-rate" min="0" max="15" value="2" oninput="updateNoiseLabels()" class="w-full accent-amber-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-300">Deletion Rate</span>
+                                    <span class="font-mono text-purple-400" id="del-rate-val">1%</span>
+                                </div>
+                                <input type="range" id="del-rate" min="0" max="10" value="1" oninput="updateNoiseLabels()" class="w-full accent-purple-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-300">Insertion Rate</span>
+                                    <span class="font-mono text-emerald-400" id="ins-rate-val">1%</span>
+                                </div>
+                                <input type="range" id="ins-rate" min="0" max="10" value="1" oninput="updateNoiseLabels()" class="w-full accent-emerald-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="simulateDNASynthesisNoise()" class="mt-4 w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-medium rounded-xl text-sm transition shadow-md shadow-amber-500/10 flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Inject Noise / Sequencer Errors
+                    </button>
+                </div>
+
+                <!-- Decoding & Reconstruction -->
+                <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-md font-semibold text-slate-200 flex items-center gap-2">
+                                <i data-lucide="file-check-2" class="w-5 h-5 text-emerald-400"></i>
+                                3. Sequencing & Decoding
+                            </h2>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                                Step 3
+                            </span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-700/50">
+                                <div class="text-xs text-slate-400 mb-1">Decoded Output Text:</div>
+                                <div id="dna-decoded-text" class="text-sm font-mono text-emerald-300 break-words min-h-[44px]">Waiting for process...</div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="p-2.5 bg-slate-900/50 border border-slate-800 rounded-lg">
+                                    <span class="text-slate-400 block">Bit Accuracy</span>
+                                    <span id="accuracy-metric" class="font-mono text-base font-bold text-white">100%</span>
+                                </div>
+                                <div class="p-2.5 bg-slate-900/50 border border-slate-800 rounded-lg">
+                                    <span class="text-slate-400 block">Mutations Detected</span>
+                                    <span id="error-count-metric" class="font-mono text-base font-bold text-amber-400">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="decodeDNASequence()" class="mt-4 w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium rounded-xl text-sm transition shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2">
+                        <i data-lucide="cpu" class="w-4 h-4"></i> Decode Sequence
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Nucleotide Sequence Viewer -->
+                <div class="lg:col-span-2 bg-slate-800/50 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                            <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
+                            Nucleotide Mapping & Alignment Inspection
+                        </h3>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> A</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> C</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> G</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> T</span>
+                        </div>
+                    </div>
+
+                    <!-- Sequence Container -->
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-xs text-slate-400 mb-1 block">Encoded Strand (Original):</span>
+                            <div id="original-strand-view" class="p-3 bg-slate-900 rounded-xl border border-slate-700/60 flex flex-wrap gap-1 font-mono text-xs max-h-36 overflow-y-auto">
+                                <span class="text-slate-500 italic">No sequence encoded yet.</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-xs text-slate-400 mb-1 block">Sequenced Strand (With Noise/Errors):</span>
+                            <div id="corrupted-strand-view" class="p-3 bg-slate-900 rounded-xl border border-slate-700/60 flex flex-wrap gap-1 font-mono text-xs max-h-36 overflow-y-auto">
+                                <span class="text-slate-500 italic">No noise injected.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D DNA Canvas Visualization -->
+                <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-5 shadow-xl flex flex-col items-center justify-center relative min-h-[300px]">
+                    <h3 class="absolute top-4 left-4 text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                        <i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-400"></i> 3D Strand Structure
+                    </h3>
+                    <canvas id="dna-canvas" class="w-full h-64 rounded-xl cursor-grab active:cursor-grabbing"></canvas>
+                    <span class="text-[10px] text-slate-500 mt-2">Interactive: Click & drag canvas to rotate helix</span>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 2: GENETIC ALGORITHMS (GA) -->
+        <section id="tab-ga" class="space-y-6 hidden">
+            <!-- GA Controls & Parameters -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Configuration Panel -->
+                <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur space-y-4">
+                    <h2 class="text-md font-semibold text-slate-200 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-indigo-400"></i>
+                        GA Parameters
+                    </h2>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Optimization Task</label>
+                        <select id="ga-task" onchange="setupGATask()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="target-text">Evolve Target Text String</option>
+                            <option value="rastrigin">Maximize Math Function (Rastrigin)</option>
+                        </select>
+                    </div>
+
+                    <div id="target-text-input-container">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Target Phrase</label>
+                        <input type="text" id="ga-target-phrase" value="SYNTHETIC DNA GA 2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Population Size</span>
+                            <span class="font-mono text-indigo-400" id="pop-size-val">200</span>
+                        </div>
+                        <input type="range" id="ga-pop-size" min="20" max="500" step="10" value="200" oninput="document.getElementById('pop-size-val').textContent=this.value" class="w-full accent-indigo-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Mutation Rate</span>
+                            <span class="font-mono text-pink-400" id="mutation-rate-val">1.5%</span>
+                        </div>
+                        <input type="range" id="ga-mutation-rate" min="0.1" max="10" step="0.1" value="1.5" oninput="document.getElementById('mutation-rate-val').textContent=this.value+'%'" class="w-full accent-pink-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Crossover Rate</span>
+                            <span class="font-mono text-cyan-400" id="crossover-rate-val">80%</span>
+                        </div>
+                        <input type="range" id="ga-crossover-rate" min="10" max="100" step="5" value="80" oninput="document.getElementById('crossover-rate-val').textContent=this.value+'%'" class="w-full accent-cyan-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Selection Strategy</label>
+                        <select id="ga-selection" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="tournament">Tournament Selection (k=3)</option>
+                            <option value="roulette">Roulette Wheel (Fitness Proportionate)</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="pt-2 flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <button id="ga-start-btn" onclick="toggleGARun()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-xs transition shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5">
+                                <i data-lucide="play" class="w-4 h-4"></i> Start Evolution
+                            </button>
+                            <button onclick="stepGA()" class="px-3 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl text-xs transition flex items-center justify-center">
+                                <i data-lucide="step-forward" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <button onclick="resetGA()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-medium rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Simulation
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Fitness Progress & Charts -->
+                <div class="lg:col-span-3 space-y-6">
+                    <!-- Stat Highlights -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-2xl backdrop-blur">
+                            <span class="text-xs text-slate-400 block mb-1">Generation</span>
+                            <span id="ga-gen-count" class="text-2xl font-bold font-mono text-white">0</span>
+                        </div>
+                        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-2xl backdrop-blur">
+                            <span class="text-xs text-slate-400 block mb-1">Best Fitness</span>
+                            <span id="ga-best-fitness" class="text-2xl font-bold font-mono text-emerald-400">0.0%</span>
+                        </div>
+                        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-2xl backdrop-blur">
+                            <span class="text-xs text-slate-400 block mb-1">Avg Fitness</span>
+                            <span id="ga-avg-fitness" class="text-2xl font-bold font-mono text-cyan-400">0.0%</span>
+                        </div>
+                        <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-2xl backdrop-blur">
+                            <span class="text-xs text-slate-400 block mb-1">Diversity Index</span>
+                            <span id="ga-diversity" class="text-2xl font-bold font-mono text-indigo-400">100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Best Candidate Output Banner -->
+                    <div class="bg-slate-800/50 border border-slate-700/60 p-4 rounded-2xl">
+                        <span class="text-xs font-semibold text-slate-400 block mb-1 flex items-center gap-1.5">
+                            <i data-lucide="award" class="w-4 h-4 text-amber-400"></i> Fittest Chromosome Candidate
+                        </span>
+                        <div id="ga-best-candidate" class="text-lg font-mono font-bold text-amber-300 bg-slate-900/80 p-3 rounded-xl border border-slate-700/50 tracking-wider break-all min-h-[50px] flex items-center">
+                            Press "Start Evolution" to begin GA...
+                        </div>
+                    </div>
+
+                    <!-- Canvas Fitness Chart -->
+                    <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-2xl relative">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                                <i data-lucide="line-chart" class="w-4 h-4 text-indigo-400"></i>
+                                Fitness Convergence Over Time
+                            </h3>
+                            <div class="flex items-center gap-4 text-xs">
+                                <span class="flex items-center gap-1 text-emerald-400"><span class="w-3 h-0.5 bg-emerald-400 inline-block"></span> Best</span>
+                                <span class="flex items-center gap-1 text-cyan-400"><span class="w-3 h-0.5 bg-cyan-400 inline-block"></span> Average</span>
+                            </div>
+                        </div>
+                        <canvas id="ga-chart-canvas" class="w-full h-56 rounded-xl bg-slate-900/60 border border-slate-800"></canvas>
+                    </div>
+
+                    <!-- Live Population Inspection Table -->
+                    <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-2xl">
+                        <h3 class="text-xs font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-purple-400"></i>
+                            Sample Population Members (Top Candidates)
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="text-slate-400 border-b border-slate-700">
+                                        <th class="pb-2 font-medium">Rank</th>
+                                        <th class="pb-2 font-medium">Chromosome / Sequence</th>
+                                        <th class="pb-2 font-medium">Fitness</th>
+                                        <th class="pb-2 font-medium">Genotype Spec</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ga-population-table" class="divide-y divide-slate-800 font-mono">
+                                    <tr>
+                                        <td colspan="4" class="py-3 text-slate-500 text-center italic">Population uninitialized.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+        DNA Data Storage & Genetic Algorithm Simulator | Built with Canvas & Tailwind CSS
+    </footer>
+
+    <!-- Application Script -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Global State & Navigation
+        let activeTab = 'dna';
+
+        function switchTab(tab) {
+            activeTab = tab;
+            const dnaTab = document.getElementById('tab-dna');
+            const gaTab = document.getElementById('tab-ga');
+            const dnaBtn = document.getElementById('tab-dna-btn');
+            const gaBtn = document.getElementById('tab-ga-btn');
+
+            if (tab === 'dna') {
+                dnaTab.classList.remove('hidden');
+                gaTab.classList.add('hidden');
+                
+                dnaBtn.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-500/20";
+                gaBtn.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-200";
+            } else {
+                dnaTab.classList.add('hidden');
+                gaTab.classList.remove('hidden');
+
+                gaBtn.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-500/20";
+                dnaBtn.className = "flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-slate-200";
+                
+                // Redraw chart when switching tabs
+                setTimeout(drawGAChart, 50);
+            }
+        }
+
+        // =====================================================================
+        // SECTION 1: DNA DATA STORAGE ENGINE LOGIC
+        // =====================================================================
+        
+        let originalNucleotides = [];
+        let corruptedNucleotides = [];
+
+        const nucMap = { '00': 'A', '01': 'C', '10': 'G', '11': 'T' };
+        const revNucMap = { 'A': '00', 'C': '01', 'G': '10', 'T': '11' };
+        
+        // Rotating map to avoid homopolymers (AAA, GGG, etc.)
+        const rotatingMap = {
+            'A': ['C', 'G', 'T'],
+            'C': ['G', 'T', 'A'],
+            'G': ['T', 'A', 'C'],
+            'T': ['A', 'C', 'G']
+        };
+
+        function updateNoiseLabels() {
+            document.getElementById('sub-rate-val').textContent = document.getElementById('sub-rate').value + '%';
+            document.getElementById('del-rate-val').textContent = document.getElementById('del-rate').value + '%';
+            document.getElementById('ins-rate-val').textContent = document.getElementById('ins-rate').value + '%';
+        }
+
+        function textToBinary(text) {
+            return text.split('').map(char => {
+                return char.charCodeAt(0).toString(2).padStart(8, '0');
+            }).join('');
+        }
+
+        function binaryToText(binary) {
+            let text = '';
+            for (let i = 0; i < binary.length; i += 8) {
+                const byte = binary.substr(i, 8);
+                if (byte.length === 8) {
+                    text += String.fromCharCode(parseInt(byte, 2));
+                }
+            }
+            return text;
+        }
+
+        function processDNAEncoding() {
+            const input = document.getElementById('dna-input-text').value;
+            const scheme = document.getElementById('dna-scheme').value;
+            const binary = textToBinary(input);
+            originalNucleotides = [];
+
+            if (scheme === 'direct') {
+                for (let i = 0; i < binary.length; i += 2) {
+                    const pair = binary.substr(i, 2);
+                    originalNucleotides.push(nucMap[pair] || 'A');
+                }
+            } else {
+                // Rotating scheme
+                let lastNuc = 'A';
+                for (let i = 0; i < binary.length; i += 2) {
+                    const pair = binary.substr(i, 2);
+                    const val = parseInt(pair, 2); // 0, 1, or 2
+                    if (val < 3) {
+                        const nextNuc = rotatingMap[lastNuc][val];
+                        originalNucleotides.push(nextNuc);
+                        lastNuc = nextNuc;
+                    } else {
+                        // 11 maps back with wrap
+                        const nextNuc = rotatingMap[lastNuc][0];
+                        originalNucleotides.push(nextNuc);
+                        lastNuc = nextNuc;
+                    }
+                }
+            }
+
+            corruptedNucleotides = [...originalNucleotides];
+            document.getElementById('nucleotide-count').textContent = `${originalNucleotides.length} Nucleotides`;
+
+            renderSequenceView();
+            initDNA3DCanvas();
+        }
+
+        function simulateDNASynthesisNoise() {
+            if (originalNucleotides.length === 0) processDNAEncoding();
+
+            const subRate = parseFloat(document.getElementById('sub-rate').value) / 100;
+            const delRate = parseFloat(document.getElementById('del-rate').value) / 100;
+            const insRate = parseFloat(document.getElementById('ins-rate').value) / 100;
+
+            const nucs = ['A', 'C', 'G', 'T'];
+            let result = [];
+
+            for (let i = 0; i < originalNucleotides.length; i++) {
+                const orig = originalNucleotides[i];
+                
+                // Deletion check
+                if (Math.random() < delRate) {
+                    result.push({ nuc: orig, type: 'del' });
+                    continue;
+                }
+
+                // Substitution check
+                if (Math.random() < subRate) {
+                    const alternatives = nucs.filter(n => n !== orig);
+                    const mutated = alternatives[Math.floor(Math.random() * alternatives.length)];
+                    result.push({ nuc: mutated, type: 'sub', orig: orig });
+                } else {
+                    result.push({ nuc: orig, type: 'normal' });
+                }
+
+                // Insertion check
+                if (Math.random() < insRate) {
+                    const inserted = nucs[Math.floor(Math.random() * nucs.length)];
+                    result.push({ nuc: inserted, type: 'ins' });
+                }
+            }
+
+            corruptedNucleotides = result;
+            renderSequenceView();
+        }
+
+        function renderSequenceView() {
+            const origContainer = document.getElementById('original-strand-view');
+            const corrContainer = document.getElementById('corrupted-strand-view');
+
+            if (originalNucleotides.length === 0) {
+                origContainer.innerHTML = `<span class="text-slate-500 italic">No sequence encoded yet.</span>`;
+                corrContainer.innerHTML = `<span class="text-slate-500 italic">No noise injected.</span>`;
+                return;
+            }
+
+            origContainer.innerHTML = originalNucleotides.map(n => 
+                `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] nucleotide-${n}">${n}</span>`
+            ).join('');
+
+            corrContainer.innerHTML = corruptedNucleotides.map(item => {
+                if (typeof item === 'string') {
+                    return `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] nucleotide-${item}">${item}</span>`;
+                }
+                if (item.type === 'del') {
+                    return `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] bg-slate-800 text-slate-500 line-through error-del" title="Deleted Base">${item.nuc}</span>`;
+                }
+                if (item.type === 'sub') {
+                    return `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] nucleotide-${item.nuc} error-sub" title="Substituted from ${item.orig}">${item.nuc}</span>`;
+                }
+                if (item.type === 'ins') {
+                    return `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] nucleotide-${item.nuc} error-ins" title="Inserted Base">${item.nuc}</span>`;
+                }
+                return `<span class="px-1.5 py-0.5 rounded font-bold text-[11px] nucleotide-${item.nuc}">${item.nuc}</span>`;
+            }).join('');
+        }
+
+        function decodeDNASequence() {
+            if (corruptedNucleotides.length === 0) return;
+
+            const scheme = document.getElementById('dna-scheme').value;
+            // Clean active nucleotides (ignoring deletions)
+            const cleanList = corruptedNucleotides
+                .filter(item => typeof item === 'string' || item.type !== 'del')
+                .map(item => typeof item === 'string' ? item : item.nuc);
+
+            let binary = '';
+            if (scheme === 'direct') {
+                for (let nuc of cleanList) {
+                    binary += revNucMap[nuc] || '00';
+                }
+            } else {
+                let lastNuc = 'A';
+                for (let nuc of cleanList) {
+                    const options = rotatingMap[lastNuc];
+                    const idx = options.indexOf(nuc);
+                    if (idx !== -1) {
+                        binary += idx.toString(2).padStart(2, '0');
+                    } else {
+                        binary += '00';
+                    }
+                    lastNuc = nuc;
+                }
+            }
+
+            const decodedText = binaryToText(binary);
+            document.getElementById('dna-decoded-text').textContent = decodedText || '[Decoding Error]';
+
+            // Calculate accuracy metrics
+            const originalText = document.getElementById('dna-input-text').value;
+            const origBinary = textToBinary(originalText);
+            
+            let matchBits = 0;
+            const totalBits = Math.max(origBinary.length, binary.length);
+            for (let i = 0; i < Math.min(origBinary.length, binary.length); i++) {
+                if (origBinary[i] === binary[i]) matchBits++;
+            }
+
+            const accuracy = totalBits > 0 ? ((matchBits / totalBits) * 100).toFixed(1) : 100;
+            document.getElementById('accuracy-metric').textContent = `${accuracy}%`;
+
+            let errorsCount = corruptedNucleotides.filter(item => typeof item !== 'string' && item.type !== 'normal').length;
+            document.getElementById('error-count-metric').textContent = errorsCount;
+        }
+
+        // 3D Double Helix Canvas Renderer
+        let dnaCanvas, dnaCtx;
+        let rotationAngle = 0;
+        let isDraggingDNA = false;
+        let lastMouseX = 0;
+
+        function initDNA3DCanvas() {
+            dnaCanvas = document.getElementById('dna-canvas');
+            dnaCtx = dnaCanvas.getContext('2d');
+            
+            // Handle DPI
+            const rect = dnaCanvas.getBoundingClientRect();
+            dnaCanvas.width = rect.width * window.devicePixelRatio;
+            dnaCanvas.height = rect.height * window.devicePixelRatio;
+            dnaCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            // Setup Mouse Rotation
+            dnaCanvas.onmousedown = (e) => { isDraggingDNA = true; lastMouseX = e.clientX; };
+            window.onmouseup = () => { isDraggingDNA = false; };
+            window.onmousemove = (e) => {
+                if (isDraggingDNA) {
+                    const delta = e.clientX - lastMouseX;
+                    rotationAngle += delta * 0.01;
+                    lastMouseX = e.clientX;
+                }
+            };
+
+            animateDNAHelix();
+        }
+
+        function animateDNAHelix() {
+            if (!dnaCtx) return;
+            const width = dnaCanvas.clientWidth;
+            const height = dnaCanvas.clientHeight;
+
+            dnaCtx.clearRect(0, 0, width, height);
+
+            const numNodes = Math.min(originalNucleotides.length || 24, 30);
+            const spacing = height / (numNodes + 2);
+            const radius = 45;
+            const centerX = width / 2;
+
+            if (!isDraggingDNA) rotationAngle += 0.015;
+
+            const nucColors = { 'A': '#ef4444', 'C': '#3b82f6', 'G': '#10b981', 'T': '#f59e0b' };
+
+            for (let i = 0; i < numNodes; i++) {
+                const y = (i + 1.5) * spacing;
+                const angle = rotationAngle + (i * 0.35);
+
+                const x1 = centerX + Math.cos(angle) * radius;
+                const z1 = Math.sin(angle);
+
+                const x2 = centerX + Math.cos(angle + Math.PI) * radius;
+                const z2 = Math.sin(angle + Math.PI);
+
+                const nuc1 = originalNucleotides[i] || 'A';
+                const nuc2 = nuc1 === 'A' ? 'T' : nuc1 === 'T' ? 'A' : nuc1 === 'C' ? 'G' : 'C';
+
+                // Render Base Pair Rung
+                dnaCtx.beginPath();
+                dnaCtx.moveTo(x1, y);
+                dnaCtx.lineTo(x2, y);
+                dnaCtx.strokeStyle = 'rgba(100, 116, 139, 0.4)';
+                dnaCtx.lineWidth = 2;
+                dnaCtx.stroke();
+
+                // Draw Node 1
+                const size1 = 6 + z1 * 2;
+                dnaCtx.beginPath();
+                dnaCtx.arc(x1, y, Math.max(2, size1), 0, Math.PI * 2);
+                dnaCtx.fillStyle = nucColors[nuc1] || '#3b82f6';
+                dnaCtx.shadowColor = nucColors[nuc1];
+                dnaCtx.shadowBlur = 8;
+                dnaCtx.fill();
+
+                // Draw Node 2
+                const size2 = 6 + z2 * 2;
+                dnaCtx.beginPath();
+                dnaCtx.arc(x2, y, Math.max(2, size2), 0, Math.PI * 2);
+                dnaCtx.fillStyle = nucColors[nuc2] || '#ef4444';
+                dnaCtx.shadowColor = nucColors[nuc2];
+                dnaCtx.shadowBlur = 8;
+                dnaCtx.fill();
+                
+                dnaCtx.shadowBlur = 0; // Reset
+            }
+
+            requestAnimationFrame(animateDNAHelix);
+        }
+
+        // =====================================================================
+        // SECTION 2: GENETIC ALGORITHMS (GA) ENGINE LOGIC
+        // =====================================================================
+
+        let gaRunning = false;
+        let gaGeneration = 0;
+        let gaPopulation = [];
+        let gaHistoryBest = [];
+        let gaHistoryAvg = [];
+        let gaAnimationId = null;
+
+        const CHAR_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*() -_=+";
+
+        function setupGATask() {
+            const task = document.getElementById('ga-task').value;
+            const container = document.getElementById('target-text-input-container');
+            if (task === 'target-text') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+            resetGA();
+        }
+
+        function getRandomChar() {
+            return CHAR_SET[Math.floor(Math.random() * CHAR_SET.length)];
+        }
+
+        function calculateFitness(chromosome) {
+            const task = document.getElementById('ga-task').value;
+
+            if (task === 'target-text') {
+                const target = document.getElementById('ga-target-phrase').value || "DNA GA";
+                let score = 0;
+                for (let i = 0; i < target.length; i++) {
+                    if (chromosome[i] === target[i]) score++;
+                }
+                return score / target.length;
+            } else {
+                // Rastrigin Function Optimization (Mapped to string genes representing floats)
+                // f(x, y) = 20 + x^2 + y^2 - 10(cos(2pi x) + cos(2pi y))
+                const valX = (chromosome.charCodeAt(0) % 20) - 10;
+                const valY = (chromosome.charCodeAt(1) % 20) - 10;
+                const rastrigin = 20 + (valX**2 - 10 * Math.cos(2 * Math.PI * valX)) + (valY**2 - 10 * Math.cos(2 * Math.PI * valY));
+                return 1 / (1 + rastrigin); // Maximize inverse
+            }
+        }
+
+        function initializeGAPopulation() {
+            const popSize = parseInt(document.getElementById('ga-pop-size').value);
+            const task = document.getElementById('ga-task').value;
+            const target = document.getElementById('ga-target-phrase').value || "DNA GA";
+            const length = task === 'target-text' ? target.length : 10;
+
+            gaPopulation = [];
+            for (let i = 0; i < popSize; i++) {
+                let genes = '';
+                for (let j = 0; j < length; j++) {
+                    genes += getRandomChar();
+                }
+                const fitness = calculateFitness(genes);
+                gaPopulation.push({ genes, fitness });
+            }
+
+            gaPopulation.sort((a, b) => b.fitness - a.fitness);
+        }
+
+        function stepGA() {
+            if (gaPopulation.length === 0) initializeGAPopulation();
+
+            const popSize = gaPopulation.length;
+            const mutationRate = parseFloat(document.getElementById('ga-mutation-rate').value) / 100;
+            const crossoverRate = parseFloat(document.getElementById('ga-crossover-rate').value) / 100;
+            const selectionMethod = document.getElementById('ga-selection').value;
+
+            let newPopulation = [];
+
+            // Elitism: Keep top 5%
+            const eliteCount = Math.max(1, Math.floor(popSize * 0.05));
+            for (let i = 0; i < eliteCount; i++) {
+                newPopulation.push({ ...gaPopulation[i] });
+            }
+
+            // Selection Helpers
+            function selectParent() {
+                if (selectionMethod === 'tournament') {
+                    // Tournament of size k=3
+                    let best = gaPopulation[Math.floor(Math.random() * popSize)];
+                    for (let i = 0; i < 2; i++) {
+                        const contestant = gaPopulation[Math.floor(Math.random() * popSize)];
+                        if (contestant.fitness > best.fitness) best = contestant;
+                    }
+                    return best;
+                } else {
+                    // Roulette Wheel Selection
+                    const totalFitness = gaPopulation.reduce((sum, ind) => sum + ind.fitness, 0);
+                    let rand = Math.random() * totalFitness;
+                    for (let ind of gaPopulation) {
+                        rand -= ind.fitness;
+                        if (rand <= 0) return ind;
+                    }
+                    return gaPopulation[0];
+                }
+            }
+
+            // Breed Next Generation
+            while (newPopulation.length < popSize) {
+                const parentA = selectParent();
+                const parentB = selectParent();
+
+                let childGenes = parentA.genes;
+
+                // Crossover
+                if (Math.random() < crossoverRate) {
+                    const mid = Math.floor(Math.random() * parentA.genes.length);
+                    childGenes = parentA.genes.substring(0, mid) + parentB.genes.substring(mid);
+                }
+
+                // Mutation
+                let mutatedGenes = '';
+                for (let i = 0; i < childGenes.length; i++) {
+                    if (Math.random() < mutationRate) {
+                        mutatedGenes += getRandomChar();
+                    } else {
+                        mutatedGenes += childGenes[i];
+                    }
+                }
+
+                newPopulation.push({
+                    genes: mutatedGenes,
+                    fitness: calculateFitness(mutatedGenes)
+                });
+            }
+
+            gaPopulation = newPopulation.sort((a, b) => b.fitness - a.fitness);
+            gaGeneration++;
+
+            // Record History Stats
+            const bestFitness = gaPopulation[0].fitness;
+            const avgFitness = gaPopulation.reduce((sum, ind) => sum + ind.fitness, 0) / popSize;
+
+            gaHistoryBest.push(bestFitness);
+            gaHistoryAvg.push(avgFitness);
+
+            if (gaHistoryBest.length > 100) {
+                gaHistoryBest.shift();
+                gaHistoryAvg.shift();
+            }
+
+            updateGAStatsUI();
+            drawGAChart();
+
+            // Check Termination Condition
+            if (bestFitness >= 1.0) {
+                toggleGARun(false);
+            }
+        }
+
+        function updateGAStatsUI() {
+            const best = gaPopulation[0];
+            const avgFitness = gaHistoryAvg[gaHistoryAvg.length - 1] || 0;
+
+            document.getElementById('ga-gen-count').textContent = gaGeneration;
+            document.getElementById('ga-best-fitness').textContent = (best.fitness * 100).toFixed(1) + '%';
+            document.getElementById('ga-avg-fitness').textContent = (avgFitness * 100).toFixed(1) + '%';
+            document.getElementById('ga-best-candidate').textContent = best.genes;
+
+            // Diversity measure (unique chromosomes ratio)
+            const unique = new Set(gaPopulation.map(p => p.genes)).size;
+            const diversity = ((unique / gaPopulation.length) * 100).toFixed(0);
+            document.getElementById('ga-diversity').textContent = `${diversity}%`;
+
+            // Populate Table
+            const tbody = document.getElementById('ga-population-table');
+            tbody.innerHTML = gaPopulation.slice(0, 5).map((ind, idx) => `
+                <tr class="hover:bg-slate-800/60 transition">
+                    <td class="py-2 font-bold ${idx === 0 ? 'text-amber-400' : 'text-slate-400'}">#${idx + 1}</td>
+                    <td class="py-2 text-indigo-300 font-semibold">${ind.genes}</td>
+                    <td class="py-2 text-emerald-400">${(ind.fitness * 100).toFixed(1)}%</td>
+                    <td class="py-2 text-slate-500 text-[11px]">Length: ${ind.genes.length} | Hex: ${strToHex(ind.genes.substring(0,4))}</td>
+                </tr>
+            `).join('');
+        }
+
+        function strToHex(str) {
+            return str.split('').map(c => c.charCodeAt(0).toString(16)).join('');
+        }
+
+        function toggleGARun(forceState = null) {
+            gaRunning = forceState !== null ? forceState : !gaRunning;
+            const startBtn = document.getElementById('ga-start-btn');
+
+            if (gaRunning) {
+                startBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i> Pause Evolution`;
+                startBtn.className = "flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-xl text-xs transition shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5";
+                runGALoop();
+            } else {
+                startBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> Resume Evolution`;
+                startBtn.className = "flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-xs transition shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5";
+                cancelAnimationFrame(gaAnimationId);
+            }
+            lucide.createIcons();
+        }
+
+        function runGALoop() {
+            if (!gaRunning) return;
+            stepGA();
+            gaAnimationId = requestAnimationFrame(runGALoop);
+        }
+
+        function resetGA() {
+            toggleGARun(false);
+            gaGeneration = 0;
+            gaHistoryBest = [];
+            gaHistoryAvg = [];
+            initializeGAPopulation();
+            updateGAStatsUI();
+            drawGAChart();
+        }
+
+        // Canvas Fitness Chart Rendering
+        function drawGAChart() {
+            const canvas = document.getElementById('ga-chart-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            const w = rect.width;
+            const h = rect.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            if (gaHistoryBest.length < 2) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '12px Inter';
+                ctx.fillText('Awaiting algorithm execution...', 20, h / 2);
+                return;
+            }
+
+            const padding = 30;
+            const chartW = w - padding * 2;
+            const chartH = h - padding * 2;
+
+            // Grid lines
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (chartH / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(w - padding, y);
+                ctx.stroke();
+            }
+
+            // Draw Line Helper
+            function drawSeries(data, color) {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+
+                for (let i = 0; i < data.length; i++) {
+                    const x = padding + (i / (data.length - 1)) * chartW;
+                    const y = padding + chartH - (data[i] * chartH);
+
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            drawSeries(gaHistoryAvg, '#38bdf8');  // Average - Cyan
+            drawSeries(gaHistoryBest, '#34d399'); // Best - Emerald
+        }
+
+        // Application Initialization
+        window.onload = () => {
+            processDNAEncoding();
+            initializeGAPopulation();
+            updateGAStatsUI();
+            drawGAChart();
+        };
+
+        window.onresize = () => {
+            if (activeTab === 'dna') initDNA3DCanvas();
+            else drawGAChart();
+        };
+    </script>
+</body>
+</html>
